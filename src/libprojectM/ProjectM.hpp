@@ -103,6 +103,8 @@ public:
 
     void RenderFrame();
 
+    std::unique_ptr<std::vector<unsigned char>> RenderFrameToBuffer();
+
     void SetBeatSensitivity(float sensitivity);
 
     auto GetBeatSensitivity() const -> float;
@@ -217,6 +219,7 @@ private:
     std::unique_ptr<Preset> m_transitioningPreset;                                //!< Destination preset when smooth preset switching.
     std::unique_ptr<Renderer::PresetTransition> m_transition;                     //!< Transition effect used for blending.
     std::unique_ptr<TimeKeeper> m_timeKeeper;                                     //!< Keeps the different timers used to render and switch presets.
+
 };
 
 } // namespace libprojectM

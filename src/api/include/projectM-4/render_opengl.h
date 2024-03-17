@@ -26,6 +26,8 @@
 #pragma once
 
 #include "projectM-4/types.h"
+#include <vector>
+#include <memory>
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,6 +42,8 @@ extern "C" {
  * @param instance The projectM instance handle.
  */
 PROJECTM_EXPORT void projectm_opengl_render_frame(projectm_handle instance);
+
+PROJECTM_EXPORT std::unique_ptr<std::vector<unsigned char>> projectm_opengl_render_frame_to_buffer(projectm_handle instance);
 
 #ifdef __cplusplus
 } // extern "C"
