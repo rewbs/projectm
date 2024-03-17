@@ -103,7 +103,15 @@ public:
 
     void RenderFrame();
 
-    std::unique_ptr<std::vector<unsigned char>> RenderFrameToBuffer();
+    /**
+     * @brief Render the next (single) frame to an in memory buffer, and return a pointer to that buffer.
+     * 
+     * @param secondsSinceLastFrame What projectM should consider to be the amount of time passed since the last frame.
+     * This is usually the amount of time passed in the audio buffer. Decoupling this from the system clock enables
+     * non-realtime rendering.
+     * 
+    */
+    std::unique_ptr<std::vector<unsigned char>> RenderFrameToBuffer(double secondsSinceLastFrame);
 
     void SetBeatSensitivity(float sensitivity);
 

@@ -14,6 +14,14 @@ TimeKeeper::TimeKeeper(double presetDuration, double smoothDuration, double hard
     UpdateTimers();
 }
 
+void TimeKeeper::UpdateTimers(double secondsSinceLastFrame)
+{
+    m_currentTime += secondsSinceLastFrame;
+    m_secondsSinceLastFrame = secondsSinceLastFrame;
+    m_presetFrameA++;
+    m_presetFrameB++;    
+}
+
 void TimeKeeper::UpdateTimers()
 {
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -23,7 +31,7 @@ void TimeKeeper::UpdateTimers()
     m_currentTime = currentFrameTime;
     m_presetFrameA++;
     m_presetFrameB++;
-}
+} 
 
 void TimeKeeper::StartPreset()
 {

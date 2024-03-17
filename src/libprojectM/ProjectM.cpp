@@ -96,7 +96,7 @@ void ProjectM::ResetTextures()
 }
 
 
-std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer()
+std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double secondsSinceLastFrame)
 {
     // Don't render if window area is zero.
     if (m_windowWidth == 0 || m_windowHeight == 0)
@@ -105,10 +105,11 @@ std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer()
     }
 
     // Update FPS and other timer values.
-    m_timeKeeper->UpdateTimers();
+    // TODO: secondsSinceLastFrame could be a fixed value based on FPS?
+    m_timeKeeper->UpdateTimers(secondsSinceLastFrame);
 
     // Update and retrieve audio data
-    // TODO: m_timeKeeper->SecondsSinceLastFrame() can be a fixed value based on FPS.
+   
     m_audioStorage.UpdateFrameAudioData(m_timeKeeper->SecondsSinceLastFrame(), m_frameCount);
     auto audioData = m_audioStorage.GetFrameAudioData();
 

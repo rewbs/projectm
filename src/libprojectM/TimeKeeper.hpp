@@ -13,6 +13,8 @@ public:
 
     void UpdateTimers();
 
+    void UpdateTimers(double secondsSinceLastFrame);
+
     void StartPreset();
 
     void StartSmoothing();

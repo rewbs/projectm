@@ -43,7 +43,7 @@ extern "C" {
  */
 PROJECTM_EXPORT void projectm_opengl_render_frame(projectm_handle instance);
 
-PROJECTM_EXPORT std::unique_ptr<std::vector<unsigned char>> projectm_opengl_render_frame_to_buffer(projectm_handle instance);
+PROJECTM_EXPORT std::unique_ptr<std::vector<unsigned char>> projectm_opengl_render_frame_to_buffer(projectm_handle instance, double secondsSinceLastFrame);
 
 #ifdef __cplusplus
 } // extern "C"
