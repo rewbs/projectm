@@ -35,8 +35,6 @@
 #include <iostream>
 #include <vector>
 
-#include "stb_image_write.h"
-
 namespace libprojectM {
 
 ProjectM::ProjectM()
@@ -171,15 +169,14 @@ std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double
     }
 
 
-    // ToDo: Call the to-be-implemented render method in Renderer
     m_activePreset->RenderFrame(audioData, renderContext);
 
-    // ToDo: Allow external apps to provide a custom target framebuffer.
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
+    // TODO: Re-enable transitions
     // if (m_transition != nullptr && m_transitioningPreset != nullptr)
     // {
-    //     // m_transition->Draw(*m_activePreset, *m_transitioningPreset, renderContext, audioData);
+    //      m_transition->Draw(*m_activePreset, *m_transitioningPreset, renderContext, audioData);
     // }
     // else
     // {
@@ -189,9 +186,8 @@ std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double
         GLint textureId = outputTexture->TextureID();
         // Allocate memory for the pixel data
         // TODO - try moving this our of the loop since allocation may be expensive. However,
-        // we may need a buffer because we don't know how fast the client code is consuming the frames (we can't immediately)
-        // reuse the buffer after returning.
-        // std::vector<unsigned char> pixels(outputTexture->Width()  * outputTexture->Height() * 4);
+        // we may need a buffer because we don't know how fast the client code is consuming the frames (we can't immediately
+        // reuse the buffer after returning.)
         auto pixels = std::make_unique<std::vector<unsigned char>>(outputTexture->Width() * outputTexture->Height() * 4);
 
 
@@ -212,14 +208,8 @@ std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double
         glDeleteFramebuffers(1, &fbo);        
 #endif
 
-        // Save the pixel data as a PNG image
-        // std::string filename = "frame-" + std::to_string(m_frameCount) + ".png";
-        // stbi_write_png(filename.c_str(), outputTexture->Width(), outputTexture->Height(), 4, pixels.data(), outputTexture->Width() * 4);
-
         // Unbind the texture
         glBindTexture(GL_TEXTURE_2D, 0);
-
-        //std::cout << "Texture saved to: " << filename << std::endl;
 
     //}
 

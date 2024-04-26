@@ -10,7 +10,6 @@ add_library(SOIL2 OBJECT
         SOIL2.c
         SOIL2.h
         stb_image.h
-        stb_image_write.h
         stbi_DDS.h
         stbi_DDS_c.h
         stbi_ext.h
