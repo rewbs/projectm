@@ -107,7 +107,6 @@ std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double
     m_timeKeeper->UpdateTimers(secondsSinceLastFrame);
 
     // Update and retrieve audio data
-   
     m_audioStorage.UpdateFrameAudioData(m_timeKeeper->SecondsSinceLastFrame(), m_frameCount);
     auto audioData = m_audioStorage.GetFrameAudioData();
 
@@ -167,51 +166,51 @@ std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double
             m_transitioningPreset->RenderFrame(audioData, renderContext);
         }
     }
-
-
     m_activePreset->RenderFrame(audioData, renderContext);
-
+    
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-    // TODO: Re-enable transitions
-    // if (m_transition != nullptr && m_transitioningPreset != nullptr)
-    // {
-    //      m_transition->Draw(*m_activePreset, *m_transitioningPreset, renderContext, audioData);
-    // }
-    // else
-    // {
-        //m_textureCopier->Draw(m_activePreset->OutputTexture(), false, false);
+    std::shared_ptr<Renderer::Texture> outputTexture = m_activePreset->OutputTexture();
+    const auto width = outputTexture->Width();
+    const auto height = outputTexture->Height();
+    const auto channels = 4; // Assuming RGBA - could check  outputTexture->Format() to be sure.
 
-        std::shared_ptr<Renderer::Texture> outputTexture = m_activePreset->OutputTexture();
-        GLint textureId = outputTexture->TextureID();
-        // Allocate memory for the pixel data
-        // TODO - try moving this our of the loop since allocation may be expensive. However,
-        // we may need a buffer because we don't know how fast the client code is consuming the frames (we can't immediately
-        // reuse the buffer after returning.)
-        auto pixels = std::make_unique<std::vector<unsigned char>>(outputTexture->Width() * outputTexture->Height() * 4);
+    GLint textureId = outputTexture->TextureID();
+    // Allocate memory for the pixel data
+    // TODO - try moving this our of the loop since allocation may be expensive. However,
+    // we may need a buffer because we don't know how fast the client code is consuming the frames (we can't immediately
+    // reuse the buffer after returning.)
+    auto pixels = std::make_unique<std::vector<unsigned char>>(width * height * channels);
 
 
 #ifndef USE_GLES
-        // Bind the texture
-        glBindTexture(GL_TEXTURE_2D, textureId);
-        // Read the pixel data from the texture
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels->data());
+    // Bind the texture
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    // Read the pixel data from the texture
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels->data());
 #else
-        GLuint fbo;
-        glGenFramebuffers(1, &fbo); 
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
+    GLuint fbo;
+    glGenFramebuffers(1, &fbo); 
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
 
-        glReadPixels(0, 0, outputTexture->Width(), outputTexture->Height(), GL_RGBA, GL_UNSIGNED_BYTE, pixels->data());
+    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels->data());
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDeleteFramebuffers(1, &fbo);        
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDeleteFramebuffers(1, &fbo); 
 #endif
 
-        // Unbind the texture
-        glBindTexture(GL_TEXTURE_2D, 0);
+    // Unbind the texture
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-    //}
+    if (m_transition != nullptr && m_transitioningPreset != nullptr)
+    {
+        m_transition->Draw(*m_activePreset, *m_transitioningPreset, renderContext, audioData);
+    }
+    else
+    {
+        m_textureCopier->Draw(m_activePreset->OutputTexture(), false, false);
+    }
 
     m_frameCount++;
     m_previousFrameVolume = audioData.vol;
