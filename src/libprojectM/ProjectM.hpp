@@ -101,7 +101,23 @@ public:
 
     void ResetTextures();
 
-    void RenderFrame();
+    void RenderFrame(uint32_t targetFramebufferObject = 0);
+
+    /**
+     * @brief Sets a user-specified time for rendering the next frame
+     * Negative values will make projectM use the system clock instead.
+     * @param secondsSinceStart Fractional seconds since rendering the first frame.
+     */
+    void SetFrameTime(double secondsSinceStart);
+
+    /**
+     * @brief Gets the time of the last frame rendered.
+     * @note This will not return the value set with SetFrameTime, but the actual time used to render the last frame.
+     *       If a user-specified frame time was set, this value is returned. Otherwise, the frame time measured via the
+     *       system clock will be returned.
+     * @return Seconds elapsed rendering the last frame since starting projectM.
+     */
+    double GetFrameTime();
 
     /**
      * @brief Render the next (single) frame to an in memory buffer, and return a pointer to that buffer.
