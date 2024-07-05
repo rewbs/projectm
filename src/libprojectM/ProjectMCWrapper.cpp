@@ -171,6 +171,14 @@ void projectm_opengl_render_frame(projectm_handle instance)
     projectMInstance->RenderFrame();
 }
 
+
+std::unique_ptr<std::vector<unsigned char>> projectm_opengl_render_frame_to_buffer(projectm_handle instance, double secondsSinceLastFrame)
+{
+    auto projectMInstance = handle_to_instance(instance);
+    return projectMInstance->RenderFrameToBuffer(secondsSinceLastFrame);
+}
+
+
 void projectm_set_beat_sensitivity(projectm_handle instance, float sensitivity)
 {
     auto projectMInstance = handle_to_instance(instance);
