@@ -54,6 +54,10 @@ void ProjectM::PresetSwitchRequestedEvent(bool) const
 
 void ProjectM::PresetSwitchFailedEvent(const std::string&, const std::string&) const
 {
+    if (m_hardFailOnPresetLoadFailure)
+    {
+        throw std::runtime_error("Preset load failed - failing hard.");
+    }
 }
 
 void ProjectM::LoadPresetFile(const std::string& presetFilename, bool smoothTransition)
@@ -93,7 +97,6 @@ void ProjectM::ResetTextures()
     m_textureManager = std::make_unique<Renderer::TextureManager>(m_textureSearchPaths);
 }
 
-
 std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double secondsSinceLastFrame)
 {
     // Don't render if window area is zero.
@@ -155,7 +158,7 @@ std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double
 
     if (m_transition != nullptr && m_transitioningPreset != nullptr)
     {
-        if (m_transition->IsDone())
+        if (m_transition->IsDone(m_timeKeeper->GetFrameTime()))
         {
             m_activePreset = std::move(m_transitioningPreset);
             m_transitioningPreset.reset();
@@ -205,132 +208,7 @@ std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double
 
     if (m_transition != nullptr && m_transitioningPreset != nullptr)
     {
-        m_transition->Draw(*m_activePreset, *m_transitioningPreset, renderContext, audioData);
-    }
-    else
-    {
-        m_textureCopier->Draw(m_activePreset->OutputTexture(), false, false);
-    }
-
-    m_frameCount++;
-    m_previousFrameVolume = audioData.vol;
-
-    return pixels;
-}
-
-
-std::unique_ptr<std::vector<unsigned char>> ProjectM::RenderFrameToBuffer(double secondsSinceLastFrame)
-{
-    // Don't render if window area is zero.
-    if (m_windowWidth == 0 || m_windowHeight == 0)
-    {
-        return NULL;
-    }
-
-    // Update FPS and other timer values.
-    // TODO: secondsSinceLastFrame could be a fixed value based on FPS?
-    m_timeKeeper->UpdateTimers(secondsSinceLastFrame);
-
-    // Update and retrieve audio data
-    m_audioStorage.UpdateFrameAudioData(m_timeKeeper->SecondsSinceLastFrame(), m_frameCount);
-    auto audioData = m_audioStorage.GetFrameAudioData();
-
-    // Check if the preset isn't locked, and we've not already notified the user
-    if (!m_presetChangeNotified)
-    {
-        // If preset is done and we're not already switching
-        if (m_timeKeeper->PresetProgressA() >= 1.0 && !m_timeKeeper->IsSmoothing())
-        {
-            m_presetChangeNotified = true;
-            PresetSwitchRequestedEvent(false);
-        }
-        else if (m_hardCutEnabled &&
-                 m_frameCount > 50 &&
-                 (audioData.vol - m_previousFrameVolume > m_hardCutSensitivity) &&
-                 m_timeKeeper->CanHardCut())
-        {
-            m_presetChangeNotified = true;
-            PresetSwitchRequestedEvent(true);
-        }
-    }
-
-    // If no preset is active, load the idle preset.
-    if (!m_activePreset)
-    {
-        LoadIdlePreset();
-        if (!m_activePreset)
-        {
-            return NULL;
-        }
-
-        m_activePreset->Initialize(GetRenderContext());
-    }
-
-    if (m_timeKeeper->IsSmoothing() && m_transitioningPreset != nullptr)
-    {
-        // ToDo: check if new preset is loaded.
-
-        if (m_timeKeeper->SmoothRatio() >= 1.0)
-        {
-            m_timeKeeper->EndSmoothing();
-        }
-    }
-
-    auto renderContext = GetRenderContext();
-
-    if (m_transition != nullptr && m_transitioningPreset != nullptr)
-    {
-        if (m_transition->IsDone())
-        {
-            m_activePreset = std::move(m_transitioningPreset);
-            m_transitioningPreset.reset();
-            m_transition.reset();
-        }
-        else
-        {
-            m_transitioningPreset->RenderFrame(audioData, renderContext);
-        }
-    }
-    m_activePreset->RenderFrame(audioData, renderContext);
-    
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    std::shared_ptr<Renderer::Texture> outputTexture = m_activePreset->OutputTexture();
-    const auto width = outputTexture->Width();
-    const auto height = outputTexture->Height();
-    const auto channels = 4; // Assuming RGBA - could check  outputTexture->Format() to be sure.
-
-    GLint textureId = outputTexture->TextureID();
-    // Allocate memory for the pixel data
-    // TODO - try moving this our of the loop since allocation may be expensive. However,
-    // we may need a buffer because we don't know how fast the client code is consuming the frames (we can't immediately
-    // reuse the buffer after returning.)
-    auto pixels = std::make_unique<std::vector<unsigned char>>(width * height * channels);
-
-
-#ifndef USE_GLES
-    // Bind the texture
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    // Read the pixel data from the texture
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels->data());
-#else
-    GLuint fbo;
-    glGenFramebuffers(1, &fbo); 
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
-
-    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels->data());
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &fbo); 
-#endif
-
-    // Unbind the texture
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    if (m_transition != nullptr && m_transitioningPreset != nullptr)
-    {
-        m_transition->Draw(*m_activePreset, *m_transitioningPreset, renderContext, audioData);
+        m_transition->Draw(*m_activePreset, *m_transitioningPreset, renderContext, audioData, m_timeKeeper->GetFrameTime());
     }
     else
     {

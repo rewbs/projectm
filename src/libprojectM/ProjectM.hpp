@@ -244,6 +244,8 @@ private:
     std::unique_ptr<Renderer::PresetTransition> m_transition;                     //!< Transition effect used for blending.
     std::unique_ptr<TimeKeeper> m_timeKeeper;                                     //!< Keeps the different timers used to render and switch presets.
 
+    bool m_hardFailOnPresetLoadFailure{true};    //!< If true, hard cuts based on beat detection are enabled.
+
 };
 
 } // namespace libprojectM
